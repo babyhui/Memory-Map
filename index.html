@@ -3,110 +3,231 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>非典型記憶地圖</title>
+    <title>彰化非典型記憶地圖</title>
     
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;700&display=swap" rel="stylesheet">
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
     <style>
-        body { margin: 0; padding: 0; font-family: "Microsoft JhengHei", sans-serif; }
-        #map { height: 100vh; width: 100%; }
-        
-        /* 彈出視窗樣式優化 */
-        .custom-popup .leaflet-popup-content-wrapper {
-            border-radius: 8px;
-            padding: 10px;
+        /* --- 文青風全域設定 --- */
+        body { 
+            margin: 0; 
+            padding: 0; 
+            font-family: 'Noto Sans TC', sans-serif; 
+            background-color: #f6f5f1; /* 米灰色底 */
+            color: #555; /* 深灰色字，不使用純黑 */
         }
+        
+        #map { 
+            height: 100vh; 
+            width: 100%; 
+            /* 地圖周圍加上淡淡的框 */
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.05);
+        }
+
+        /* --- 標題列 --- */
+        .map-header {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 10px 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-left: 4px solid #a3b18a; /* 莫蘭迪綠 */
+        }
+        .map-header h1 { margin: 0; font-size: 1.2rem; font-weight: 700; color: #333; }
+        .map-header p { margin: 2px 0 0; font-size: 0.8rem; color: #888; }
+
+        /* --- Leaflet 彈出視窗(Popup) 美化 --- */
+        /* 隱藏預設的關閉按鈕，讓介面更乾淨 */
+        .leaflet-popup-close-button { display: none !important; }
+
+        .leaflet-popup-content-wrapper {
+            background-color: #fff;
+            border-radius: 12px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15) !important;
+            padding: 0;
+            overflow: hidden;
+            border: 1px solid #eee;
+        }
+
+        .leaflet-popup-content {
+            margin: 0;
+            min-width: 250px;
+        }
+
+        /* 彈出視窗標題區 */
+        .popup-header {
+            background-color: #a3b18a; /* 莫蘭迪綠 */
+            color: white;
+            padding: 12px 15px;
+            font-size: 1rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .popup-header img { width: 20px; filter: invert(1); } /* 讓圖標變白色 */
+
+        /* 彈出視窗內容區 */
+        .popup-body {
+            padding: 15px;
+        }
+        .popup-body p { margin: 0 0 10px; font-size: 0.9rem; line-height: 1.6; color: #666; }
+
+        /* --- 按鈕樣式 (莫蘭迪藍) --- */
         .option-btn {
             display: block;
             width: 100%;
-            margin: 5px 0;
-            padding: 8px;
-            background: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            text-align: center;
-        }
-        .option-btn:hover { background: #0056b3; }
-        
-        .content-area { margin-top: 10px; border-top: 1px solid #ddd; padding-top: 10px; display: none; }
-        .audio-placeholder {
-            background: #f1f3f4;
+            margin-bottom: 8px;
             padding: 10px;
-            border-radius: 20px;
+            background: #fff;
+            color: #5d6d7e; /* 莫蘭迪藍灰 */
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            cursor: pointer;
+            text-align: left;
+            font-size: 0.85rem;
+            font-weight: 400;
+            transition:all 0.3s ease;
+            position: relative;
+        }
+        .option-btn::after {
+            content: '>';
+            position: absolute;
+            right: 15px;
+            color: #ccc;
+        }
+        .option-btn:hover { 
+            background: #f8f9fa; 
+            border-color: #a3b18a;
+            color: #333;
+        }
+        .option-btn:hover::after {
+            color: #a3b18a;
+        }
+        
+        /* 內容顯示區域 */
+        .content-display { margin-top: 15px; border-top: 1px solid #eee; padding-top: 15px; display: none; text-align: center; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* 人員 A 的文字樣式 */
+        #cinema-display-1 { text-align: left; }
+
+        /* 人員 B 的圖片樣式 */
+        .person-img { width: 100%; height: 150px; object-fit: cover; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+
+        /* --- 錄音檔模擬器美化 --- */
+        .audio-player {
+            background: #f1f3f4;
+            padding: 12px 15px;
+            border-radius: 30px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            margin-top: 10px;
         }
+        .play-btn { color: #5d6d7e; font-size: 1.2rem; cursor: pointer; }
+        .timeline-bg { flex-grow: 1; height: 5px; background: #ddd; border-radius: 2px; position: relative; }
+        .timeline-progress { width: 35%; height: 100%; background: #5d6d7e; border-radius: 2px; }
+        .audio-time { font-size: 0.75rem; color: #888; font-family: monospace; }
+        .audio-status { font-size: 0.8rem; color: #999; margin-top: 8px; text-align: center; }
+
     </style>
 </head>
 <body>
+
+<div class="map-header">
+    <h1>彰化散策地圖</h1>
+    <p>日常の風景，午後的時光</p>
+</div>
 
 <div id="map"></div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-    // 1. 初始化地圖，中心點設在彰化市火車站附近
-    const map = L.map('map').setView([24.0817, 120.5385], 15);
+    // 1. 初始化地圖 (中心點在彰化市火車站附近)
+    // 為了文青感，我們提高預設縮放層級，更聚焦在街區
+    const map = L.map('map').setView([24.0817, 120.5385], 16);
 
-    // 2. 載入地圖圖層 (使用 OpenStreetMap)
+    // 2. 載入地圖圖層 (OpenStreetMap)
+    // 文青小撇步：如果可以，尋找更簡約風格的地圖底圖（例如 Stadia Maps），但 OpenStreetMap 最穩定。
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // --- 標記：電影院 (以彰化戲院附近為例) ---
+    // --- 標記：電影院 (使用自定義標記樣式) ---
+    // 文青風格通常喜歡用更簡約的圖標，這裡我們維持預設，但你可以替換為自己的圖檔
     const cinemaMarker = L.marker([24.0815, 120.5405]).addTo(map);
     
-    // 電影院的彈出內容
+    // 電影院彈出內容 (美化版)
     const cinemaHtml = `
-        <b>彰化電影院</b><br>請選擇人員：
-        <button class="option-btn" onclick="showCinemaContent('person1')">人員 A (文字)</button>
-        <button class="option-btn" onclick="showCinemaContent('person2')">人員 B (圖片)</button>
-        <div id="cinema-display" class="content-area"></div>
+        <div class="popup-header">
+            <img src="https://img.icons8.com/material-rounded/24/cinema.png" alt="movie"/>
+            時光戲院
+        </div>
+        <div class="popup-body">
+            <p>在那裡，我們交換過的故事，比螢幕上的更精彩。請選擇分享者：</p>
+            <button class="option-btn" onclick="showCinemaContent(1)">1. 拾荒者 (文字日記)</button>
+            <button class="option-btn" onclick="showCinemaContent(2)">2. 夢想家 (生活寫真)</button>
+            <div id="cinema-display-1" class="content-display">
+                <p><i>「那天午後，陽光灑在紅色的座椅上，空氣中瀰漫著爆米花的香氣。blabla...」</i></p>
+            </div>
+            <div id="cinema-display-2" class="content-display">
+                <img src="https://picsum.photos/id/111/300/150" alt="人員B" class="person-img">
+            </div>
+        </div>
     `;
     cinemaMarker.bindPopup(cinemaHtml);
 
-    // --- 標記：菜市場 (以三民市場附近為例) ---
+    // --- 標記：菜市場 ---
     const marketMarker = L.marker([24.0845, 120.5425]).addTo(map);
     
-    // 菜市場的彈出內容
+    // 菜市場彈出內容 (美化版)
     const marketHtml = `
-        <b>彰化菜市場</b><br>請選擇人員：
-        <button class="option-btn" onclick="showMarketContent()">人員 C (錄音檔)</button>
-        <div id="market-display" class="content-area"></div>
+        <div class="popup-header">
+            <img src="https://img.icons8.com/material-rounded/24/shopping-cart.png" alt="market"/>
+            三民市場
+        </div>
+        <div class="popup-body">
+            <p>市場裡的喧囂，是這座城市最溫柔的呼吸。請點擊：</p>
+            <button class="option-btn" onclick="showMarketContent()">1. 蔬菜攤老闆 (語音留言)</button>
+            <div id="market-display" class="content-display">
+                <div class="audio-player">
+                    <span class="play-btn">▶</span>
+                    <div class="timeline-bg">
+                        <div class="timeline-progress"></div>
+                    </div>
+                    <span class="audio-time">0:12 / 1:05</span>
+                </div>
+                <p class="audio-status">正在播放老闆的暖心留言...</p>
+            </div>
+        </div>
     `;
     marketMarker.bindPopup(marketHtml);
 
     // --- 互動邏輯功能 ---
 
     // 電影院顯示功能
-    function showCinemaContent(type) {
-        const display = document.getElementById('cinema-display');
-        display.style.display = 'block';
-        if (type === 'person1') {
-            display.innerHTML = '<p style="color: #333;">blabla... 這是第一位人員的文字訊息。</p>';
-        } else {
-            // 請將此處網址替換成你的圖片路徑
-            display.innerHTML = '<img src="https://picsum.photos/150/100" alt="人員B" style="width:100%; border-radius:4px;">';
-        }
+    function showCinemaContent(index) {
+        // 先隱藏所有電影院內容
+        document.getElementById('cinema-display-1').style.display = 'none';
+        document.getElementById('cinema-display-2').style.display = 'none';
+
+        // 顯示被選中的內容
+        document.getElementById('cinema-display-' + index).style.display = 'block';
     }
 
-    // 菜市場顯示功能 (模擬錄音檔)
+    // 菜市場顯示功能
     function showMarketContent() {
-        const display = document.getElementById('market-display');
-        display.style.display = 'block';
-        display.innerHTML = `
-            <div class="audio-placeholder">
-                <span>▶️</span>
-                <div style="flex-grow:1; height:4px; background: #ccc; position:relative;">
-                    <div style="width:30%; height:100%; background:#007bff;"></div>
-                </div>
-                <small>0:12 / 1:05</small>
-            </div>
-            <p style="font-size:12px; color:gray; margin-top:5px;">正在播放人員 C 的留言...</p>
-        `;
+        document.getElementById('market-display').style.display = 'block';
     }
 </script>
 
