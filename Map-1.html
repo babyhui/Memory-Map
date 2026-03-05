@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>彰化市互動地圖</title>
+    
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        body { margin: 0; padding: 0; font-family: "Microsoft JhengHei", sans-serif; }
+        #map { height: 100vh; width: 100%; }
+        
+        /* 彈出視窗樣式優化 */
+        .custom-popup .leaflet-popup-content-wrapper {
+            border-radius: 8px;
+            padding: 10px;
+        }
+        .option-btn {
+            display: block;
+            width: 100%;
+            margin: 5px 0;
+            padding: 8px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-align: center;
+        }
+        .option-btn:hover { background: #0056b3; }
+        
+        .content-area { margin-top: 10px; border-top: 1px solid #ddd; padding-top: 10px; display: none; }
+        .audio-placeholder {
+            background: #f1f3f4;
+            padding: 10px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="map"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    // 1. 初始化地圖，中心點設在彰化市火車站附近
+    const map = L.map('map').setView([24.0817, 120.5385], 15);
+
+    // 2. 載入地圖圖層 (使用 OpenStreetMap)
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // --- 標記：電影院 (以彰化戲院附近為例) ---
+    const cinemaMarker = L.marker([24.0815, 120.5405]).addTo(map);
+    
+    // 電影院的彈出內容
+    const cinemaHtml = `
+        <b>彰化電影院</b><br>請選擇人員：
+        <button class="option-btn" onclick="showCinemaContent('person1')">人員 A (文字)</button>
+        <button class="option-btn" onclick="showCinemaContent('person2')">人員 B (圖片)</button>
+        <div id="cinema-display" class="content-area"></div>
+    `;
+    cinemaMarker.bindPopup(cinemaHtml);
+
+    // --- 標記：菜市場 (以三民市場附近為例) ---
+    const marketMarker = L.marker([24.0845, 120.5425]).addTo(map);
+    
+    // 菜市場的彈出內容
+    const marketHtml = `
+        <b>彰化菜市場</b><br>請選擇人員：
+        <button class="option-btn" onclick="showMarketContent()">人員 C (錄音檔)</button>
+        <div id="market-display" class="content-area"></div>
+    `;
+    marketMarker.bindPopup(marketHtml);
+
+    // --- 互動邏輯功能 ---
+
+    // 電影院顯示功能
+    function showCinemaContent(type) {
+        const display = document.getElementById('cinema-display');
+        display.style.display = 'block';
+        if (type === 'person1') {
+            display.innerHTML = '<p style="color: #333;">blabla... 這是第一位人員的文字訊息。</p>';
+        } else {
+            // 請將此處網址替換成你的圖片路徑
+            display.innerHTML = '<img src="https://picsum.photos/150/100" alt="人員B" style="width:100%; border-radius:4px;">';
+        }
+    }
+
+    // 菜市場顯示功能 (模擬錄音檔)
+    function showMarketContent() {
+        const display = document.getElementById('market-display');
+        display.style.display = 'block';
+        display.innerHTML = `
+            <div class="audio-placeholder">
+                <span>▶️</span>
+                <div style="flex-grow:1; height:4px; background: #ccc; position:relative;">
+                    <div style="width:30%; height:100%; background:#007bff;"></div>
+                </div>
+                <small>0:12 / 1:05</small>
+            </div>
+            <p style="font-size:12px; color:gray; margin-top:5px;">正在播放人員 C 的留言...</p>
+        `;
+    }
+</script>
+
+</body>
+</html>
